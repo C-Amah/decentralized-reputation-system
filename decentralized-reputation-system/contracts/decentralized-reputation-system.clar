@@ -186,3 +186,194 @@
   )
 )
 
+;; New error constants
+(define-constant ERR-INSUFFICIENT-FUNDS (err u413))
+(define-constant ERR-CATEGORY-NOT-FOUND (err u414))
+(define-constant ERR-ALREADY-VERIFIED (err u415))
+(define-constant ERR-INACTIVE-IDENTITY (err u416))
+
+;; New data vars
+(define-data-var admin principal tx-sender)
+(define-data-var dispute-counter uint u0)
+(define-data-var minimum-stake uint u100)
+(define-data-var cooldown-period uint u144) ;; ~1 day in blocks
+(define-data-var system-fee-percentage uint u5) ;; 5% fee
+(define-data-var system-treasury principal tx-sender)
+
+;; New data maps
+(define-map endorsements
+  { attestation-from: principal, attestation-to: principal, endorser: principal }
+  {
+    timestamp: uint,
+    comment: (optional (string-utf8 128))
+  }
+)
+
+(define-map user-notifications
+  { user: principal, id: uint }
+  {
+    type: (string-utf8 32), ;; "dispute", "attestation", "endorsement", etc.
+    message: (string-utf8 256),
+    created-at: uint,
+    read: bool,
+    related-principal: (optional principal),
+    action-url: (optional (string-utf8 128))
+  }
+)
+
+(define-map user-notification-counters
+  { user: principal }
+  {
+    last-id: uint,
+    unread-count: uint
+  }
+)
+;; New read-only functions
+(define-read-only (get-identity (owner principal))
+  (map-get? identities { owner: owner })
+)
+
+(define-read-only (get-admin)
+  (var-get admin)
+)
+
+(define-read-only (get-stake-requirement)
+  (var-get minimum-stake)
+)
+
+(define-read-only (get-system-fee)
+  (var-get system-fee-percentage)
+)
+
+(define-read-only (get-treasury)
+  (var-get system-treasury)
+)
+
+(define-read-only (list-attestations-by (user principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-read-only (list-endorsements-for-attestation (from principal) (to principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-read-only (get-user-notifications (user principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-public (stake-funds (amount uint))
+  (let (
+    (identity (map-get? identities { owner: tx-sender }))
+  )
+    (asserts! (is-some identity) ERR-NO-IDENTITY)
+    (asserts! (is-eq (stx-transfer? amount tx-sender (as-contract tx-sender)) (ok true)) ERR-INSUFFICIENT-FUNDS)
+    
+    (map-set identities
+      { owner: tx-sender }
+      (merge (unwrap-panic identity) {
+        last-active: stacks-block-height
+      })
+    )
+    
+    (ok true)
+  )
+)
+
+(define-public (unstake-funds (amount uint))
+  (let (
+    (identity (map-get? identities { owner: tx-sender }))
+  )
+    (asserts! (is-some identity) ERR-NO-IDENTITY)
+    
+    
+    (try! (as-contract (stx-transfer? amount (as-contract tx-sender) tx-sender)))
+    
+    (map-set identities
+      { owner: tx-sender }
+      (merge (unwrap-panic identity) {
+      
+        last-active: stacks-block-height
+      })
+    )
+    
+    (ok true)
+  )
+)
+
+(define-public (set-admin (new-admin principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get admin)) ERR-NOT-AUTHORIZED)
+    (var-set admin new-admin)
+    (ok true)
+  )
+)
+
+(define-public (set-system-params (stake uint) (cooldown uint) (fee uint) (treasury principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get admin)) ERR-NOT-AUTHORIZED)
+    (asserts! (<= fee u100) ERR-INVALID-RATING)
+    
+    (var-set minimum-stake stake)
+    (var-set cooldown-period cooldown)
+    (var-set system-fee-percentage fee)
+    (var-set system-treasury treasury)
+    
+    (ok true)
+  )
+)
+
+(define-public (mark-notifications-as-read (user principal))
+  (let (
+    (counter-data (map-get? user-notification-counters { user: user }))
+  )
+    (asserts! (is-eq tx-sender user) ERR-NOT-AUTHORIZED)
+    (asserts! (is-some counter-data) ERR-NO-IDENTITY)
+    
+    (map-set user-notification-counters
+      { user: user }
+      (merge (unwrap-panic counter-data) {
+        unread-count: u0
+      })
+    )
+    
+    (ok true)
+  )
+)
+
+;; Private function for notifications
+(define-private (create-notification (user principal) (type (string-utf8 32)) (message (string-utf8 256)) (related-principal (optional principal)) (action-url (optional (string-utf8 128))))
+  (let (
+    (counter-data (default-to { last-id: u0, unread-count: u0 } (map-get? user-notification-counters { user: user })))
+    (new-id (+ (get last-id counter-data) u1))
+  )
+    ;; Create notification
+    (map-set user-notifications
+      { user: user, id: new-id }
+      {
+        type: type,
+        message: message,
+        created-at: stacks-block-height,
+        read: false,
+        related-principal: related-principal,
+        action-url: action-url
+      }
+    )
+    
+    ;; Update counter
+    (map-set user-notification-counters
+      { user: user }
+      {
+        last-id: new-id,
+        unread-count: (+ (get unread-count counter-data) u1)
+      }
+    )
+    
+    true
+  )
+)
