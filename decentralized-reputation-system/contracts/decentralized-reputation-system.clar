@@ -267,10 +267,41 @@
   (list)
 )
 
-(define-read-only (get-unread-notification-count (user principal))
-  (match (map-get? user-notification-counters { user: user })
-    counter (get unread-count counter)
-    u0
+(define-public (stake-funds (amount uint))
+  (let (
+    (identity (map-get? identities { owner: tx-sender }))
+  )
+    (asserts! (is-some identity) ERR-NO-IDENTITY)
+    (asserts! (is-eq (stx-transfer? amount tx-sender (as-contract tx-sender)) (ok true)) ERR-INSUFFICIENT-FUNDS)
+    
+    (map-set identities
+      { owner: tx-sender }
+      (merge (unwrap-panic identity) {
+        last-active: stacks-block-height
+      })
+    )
+    
+    (ok true)
   )
 )
 
+(define-public (unstake-funds (amount uint))
+  (let (
+    (identity (map-get? identities { owner: tx-sender }))
+  )
+    (asserts! (is-some identity) ERR-NO-IDENTITY)
+    
+    
+    (try! (as-contract (stx-transfer? amount (as-contract tx-sender) tx-sender)))
+    
+    (map-set identities
+      { owner: tx-sender }
+      (merge (unwrap-panic identity) {
+      
+        last-active: stacks-block-height
+      })
+    )
+    
+    (ok true)
+  )
+)
