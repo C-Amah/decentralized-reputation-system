@@ -186,3 +186,27 @@
   )
 )
 
+;; New error constants
+(define-constant ERR-INSUFFICIENT-FUNDS (err u413))
+(define-constant ERR-CATEGORY-NOT-FOUND (err u414))
+(define-constant ERR-ALREADY-VERIFIED (err u415))
+(define-constant ERR-INACTIVE-IDENTITY (err u416))
+
+;; New data vars
+(define-data-var admin principal tx-sender)
+(define-data-var dispute-counter uint u0)
+(define-data-var minimum-stake uint u100)
+(define-data-var cooldown-period uint u144) ;; ~1 day in blocks
+(define-data-var system-fee-percentage uint u5) ;; 5% fee
+(define-data-var system-treasury principal tx-sender)
+
+;; New data maps
+(define-map endorsements
+  { attestation-from: principal, attestation-to: principal, endorser: principal }
+  {
+    timestamp: uint,
+    comment: (optional (string-utf8 128))
+  }
+)
+
+
