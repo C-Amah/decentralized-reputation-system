@@ -209,4 +209,43 @@
   }
 )
 
+(define-map user-notifications
+  { user: principal, id: uint }
+  {
+    type: (string-utf8 32), ;; "dispute", "attestation", "endorsement", etc.
+    message: (string-utf8 256),
+    created-at: uint,
+    read: bool,
+    related-principal: (optional principal),
+    action-url: (optional (string-utf8 128))
+  }
+)
+
+(define-map user-notification-counters
+  { user: principal }
+  {
+    last-id: uint,
+    unread-count: uint
+  }
+)
+;; New read-only functions
+(define-read-only (get-identity (owner principal))
+  (map-get? identities { owner: owner })
+)
+
+(define-read-only (get-admin)
+  (var-get admin)
+)
+
+(define-read-only (get-stake-requirement)
+  (var-get minimum-stake)
+)
+
+(define-read-only (get-system-fee)
+  (var-get system-fee-percentage)
+)
+
+(define-read-only (get-treasury)
+  (var-get system-treasury)
+)
 
