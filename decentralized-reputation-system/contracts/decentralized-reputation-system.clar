@@ -153,4 +153,25 @@
   )
 )
 
+(define-public (add-trusted-verifier (verifier principal) (trust-score uint))
+  (let (
+    (current-time stacks-block-height)
+    (existing-verifier (map-get? trusted-verifiers { verifier: verifier }))
+  )
+    
+    (asserts! (is-none existing-verifier) ERR-ATTESTATION-EXISTS)
+    
+    (map-set trusted-verifiers
+      { verifier: verifier }
+      {
+        trust-score: trust-score,
+        added-by: tx-sender,
+        added-at: current-time,
+        verification-count: u0
+      }
+    )
+    
+    (ok true)
+  )
+)
 
