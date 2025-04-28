@@ -26,4 +26,28 @@
   }
 )
 
+(define-map attestations
+  { from: principal, to: principal }
+  {
+    rating: int,
+    timestamp: uint,
+    category: (string-utf8 64),
+    description: (string-utf8 256),
+    signature-verified: bool,
+    transaction-hash: (optional (buff 32)),
+    revoked: bool
+  }
+)
+
+(define-map categories
+  { name: (string-utf8 64) }
+  {
+    weight: uint,
+    description: (string-utf8 256),
+    created-by: principal,
+    created-at: uint
+  }
+)
+
+
 
