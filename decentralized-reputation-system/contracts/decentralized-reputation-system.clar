@@ -305,3 +305,25 @@
     (ok true)
   )
 )
+
+(define-public (set-admin (new-admin principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get admin)) ERR-NOT-AUTHORIZED)
+    (var-set admin new-admin)
+    (ok true)
+  )
+)
+
+(define-public (set-system-params (stake uint) (cooldown uint) (fee uint) (treasury principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get admin)) ERR-NOT-AUTHORIZED)
+    (asserts! (<= fee u100) ERR-INVALID-RATING)
+    
+    (var-set minimum-stake stake)
+    (var-set cooldown-period cooldown)
+    (var-set system-fee-percentage fee)
+    (var-set system-treasury treasury)
+    
+    (ok true)
+  )
+)
