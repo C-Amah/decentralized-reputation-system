@@ -327,3 +327,53 @@
     (ok true)
   )
 )
+
+(define-public (mark-notifications-as-read (user principal))
+  (let (
+    (counter-data (map-get? user-notification-counters { user: user }))
+  )
+    (asserts! (is-eq tx-sender user) ERR-NOT-AUTHORIZED)
+    (asserts! (is-some counter-data) ERR-NO-IDENTITY)
+    
+    (map-set user-notification-counters
+      { user: user }
+      (merge (unwrap-panic counter-data) {
+        unread-count: u0
+      })
+    )
+    
+    (ok true)
+  )
+)
+
+;; Private function for notifications
+(define-private (create-notification (user principal) (type (string-utf8 32)) (message (string-utf8 256)) (related-principal (optional principal)) (action-url (optional (string-utf8 128))))
+  (let (
+    (counter-data (default-to { last-id: u0, unread-count: u0 } (map-get? user-notification-counters { user: user })))
+    (new-id (+ (get last-id counter-data) u1))
+  )
+    ;; Create notification
+    (map-set user-notifications
+      { user: user, id: new-id }
+      {
+        type: type,
+        message: message,
+        created-at: stacks-block-height,
+        read: false,
+        related-principal: related-principal,
+        action-url: action-url
+      }
+    )
+    
+    ;; Update counter
+    (map-set user-notification-counters
+      { user: user }
+      {
+        last-id: new-id,
+        unread-count: (+ (get unread-count counter-data) u1)
+      }
+    )
+    
+    true
+  )
+)
