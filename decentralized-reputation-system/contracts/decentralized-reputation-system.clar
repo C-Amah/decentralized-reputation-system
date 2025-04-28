@@ -94,5 +94,28 @@
   }
 )
 
+(define-read-only (get-attestation (from principal) (to principal))
+  (map-get? attestations { from: from, to: to })
+)
+
+(define-read-only (get-category (name (string-utf8 64)))
+  (map-get? categories { name: name })
+)
+
+(define-read-only (get-fraud-report (reporter principal) (subject principal))
+  (map-get? fraud-reports { reporter: reporter, subject: subject })
+)
+
+(define-read-only (get-dispute (id uint))
+  (map-get? disputes { id: id })
+)
+
+(define-read-only (get-dispute-vote (dispute-id uint) (voter principal))
+  (map-get? dispute-votes { dispute-id: dispute-id, voter: voter })
+)
+
+(define-read-only (is-trusted-verifier (verifier principal))
+  (is-some (map-get? trusted-verifiers { verifier: verifier }))
+)
 
 
