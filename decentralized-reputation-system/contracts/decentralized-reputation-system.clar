@@ -249,3 +249,28 @@
   (var-get system-treasury)
 )
 
+(define-read-only (list-attestations-by (user principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-read-only (list-endorsements-for-attestation (from principal) (to principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-read-only (get-user-notifications (user principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-read-only (get-unread-notification-count (user principal))
+  (match (map-get? user-notification-counters { user: user })
+    counter (get unread-count counter)
+    u0
+  )
+)
+
