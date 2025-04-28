@@ -118,4 +118,39 @@
   (is-some (map-get? trusted-verifiers { verifier: verifier }))
 )
 
+(define-read-only (verify-bitcoin-signature (btc-address (buff 33)) (message (buff 128)) (signature (buff 65)))
+  ;; This is a placeholder function - in a real implementation,
+  ;; this would call a built-in or external function to verify Bitcoin signatures
+  ;; For now, we'll always return true for demo purposes
+  true
+)
+
+(define-read-only (list-attestations-for (user principal) (limit uint) (offset uint))
+  ;; In actual implementation, this would use map functionality to return paginated results
+  ;; For demonstration purposes, returning empty list
+  (list)
+)
+
+(define-public (create-category (name (string-utf8 64)) (description (string-utf8 256)) (weight uint))
+  (let (
+    (current-time stacks-block-height)
+    (existing-category (map-get? categories { name: name }))
+  )
+    
+    (asserts! (is-none existing-category) ERR-ATTESTATION-EXISTS)
+    
+    (map-set categories
+      { name: name }
+      {
+        weight: weight,
+        description: description,
+        created-by: tx-sender,
+        created-at: current-time
+      }
+    )
+    
+    (ok true)
+  )
+)
+
 
