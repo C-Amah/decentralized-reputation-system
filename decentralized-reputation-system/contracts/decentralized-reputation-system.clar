@@ -49,5 +49,32 @@
   }
 )
 
+(define-map fraud-reports
+  { reporter: principal, subject: principal }
+  {
+    reason: (string-utf8 256),
+    evidence: (string-utf8 512),
+    timestamp: uint,
+    status: (string-utf8 20), ;; "pending", "approved", "rejected"
+    votes-for: uint,
+    votes-against: uint
+  }
+)
+
+(define-map disputes
+  { id: uint }
+  {
+    creator: principal,
+    defendant: principal,
+    attestation-from: principal,
+    attestation-to: principal,
+    reason: (string-utf8 256),
+    evidence: (string-utf8 512),
+    created-at: uint,
+    status: (string-utf8 20), ;; "pending", "resolved", "dismissed"
+    resolution: (optional (string-utf8 256))
+  }
+)
+
 
 
