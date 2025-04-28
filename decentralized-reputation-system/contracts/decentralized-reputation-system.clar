@@ -76,5 +76,23 @@
   }
 )
 
+(define-map dispute-votes
+  { dispute-id: uint, voter: principal }
+  {
+    vote: bool, ;; true = for, false = against
+    timestamp: uint
+  }
+)
+
+(define-map trusted-verifiers
+  { verifier: principal }
+  {
+    trust-score: uint,
+    added-by: principal,
+    added-at: uint,
+    verification-count: uint
+  }
+)
+
 
 
